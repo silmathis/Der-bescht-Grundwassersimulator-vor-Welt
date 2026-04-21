@@ -17,15 +17,15 @@ from my_project.groundwater_model import GroundwaterModel
 # Page config
 st.set_page_config(
     page_title="Groundwater Flow Simulator",
-    page_icon="💧",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Title and warning
-st.title("💧 Interactive Groundwater Flow Simulator")
+st.title("Interactive Groundwater Flow Simulator")
 st.markdown("""
-**⚠️ Educational Tool Only**  
+**Educational Tool Only**  
 This is a simplified, conceptual model designed for learning and exploration.
 It is **not** suitable for engineering predictions or real-world applications.
 """)
@@ -41,7 +41,7 @@ model = st.session_state.model
 # SIDEBAR: PARAMETER CONTROLS
 # ============================================================================
 
-st.sidebar.header("⚙️ Model Parameters")
+st.sidebar.header("Model Parameters")
 
 # Grid size
 st.sidebar.subheader("Domain Size")
@@ -73,7 +73,7 @@ with col2:
     model.head_east = st.slider("East (right)", 0.0, 30.0, 10.0, step=0.5)
 
 st.sidebar.info(
-    "💡 **Tip:** Higher boundary values at the top will drive flow downward."
+    "**Tip:** Higher boundary values at the top will drive flow downward."
 )
 
 # Zone definitions
@@ -106,7 +106,7 @@ with col2:
 if st.sidebar.button("Apply Zone"):
     model.set_zone(zone_x_min, zone_x_max, zone_y_min, zone_y_max, selected_k)
     st.session_state.solved = False
-    st.toast(f"✅ Zone applied: K = {selected_k} m/day")
+    st.toast(f"Zone applied: K = {selected_k} m/day")
 
 # Recharge
 st.sidebar.subheader("Recharge (Infiltration)")
@@ -123,7 +123,7 @@ recharge_y_max = st.sidebar.number_input("R: Y end", 1, ny, value=int(ny * 0.3),
 if st.sidebar.button("Apply Recharge"):
     model.set_recharge(recharge_x_min, recharge_x_max, recharge_y_min, recharge_y_max, recharge_rate)
     st.session_state.solved = False
-    st.toast(f"✅ Recharge zone applied: {recharge_rate} m/day")
+    st.toast(f"Recharge zone applied: {recharge_rate} m/day")
 
 # Reset button
 if st.sidebar.button("Reset Model", type="secondary"):
@@ -148,17 +148,17 @@ col_main, col_info = st.columns([3, 1])
 
 with col_main:
     if st.button("▶️ Solve Model", use_container_width=True, type="primary"):
-        with st.spinner("🔄 Solving..."):
+        with st.spinner("Solving..."):
             model.solve(iterations=iterations, tolerance=tolerance)
             st.session_state.solved = True
-        st.success("✅ Model solved!")
+        st.success("Model solved!")
 
 if st.session_state.solved:
     # Compute flow field
     qx, qy, q_mag = model.compute_flow()
     
     with col_info:
-        st.subheader("📊 Results")
+        st.subheader("Results")
         summary = model.get_summary()
         st.metric("Head (min)", f"{summary['head_min']:.2f} m")
         st.metric("Head (max)", f"{summary['head_max']:.2f} m")
@@ -259,7 +259,7 @@ if st.session_state.solved:
 
 st.divider()
 
-with st.expander("📖 How to use this simulator"):
+with st.expander("How to use this simulator"):
     st.markdown("""
     ### Getting Started
     
@@ -282,7 +282,7 @@ with st.expander("📖 How to use this simulator"):
     - **Conductivity Effect:** Higher K (sand) → faster flow; Lower K (clay) → slower flow
     """)
 
-with st.expander("⚠️ Model Limitations"):
+with st.expander("Model Limitations"):
     st.markdown("""
     - **Steady-state only:** This model shows equilibrium, not transient dynamics
     - **Simplified physics:** Uses basic Darcy's law, ignores anisotropy and dispersion
@@ -296,7 +296,7 @@ with st.expander("⚠️ Model Limitations"):
 
 st.sidebar.markdown("---")
 st.sidebar.info(
-    "🎓 **Educational Groundwater Simulator**  \n"
+    "**Educational Groundwater Simulator**  \n"
     "Version 0.1.0  \n"
     "Built with Streamlit, NumPy, and SciPy"
 )
