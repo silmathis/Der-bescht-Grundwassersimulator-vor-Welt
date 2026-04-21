@@ -168,5 +168,9 @@ For questions or issues, please open an issue in the repository.
 **Last Updated:** 2026-04-21  
 **Status:** Active Development
 
-#Link
-https://2d34cfe8b48b12.lhr.life
+## Access
+
+So öffnest du jetzt sicher:
+
+Lokal immer: http://localhost:8501
+Öffentlich aktuell: https://1996945a175c4a.lhr.life
