@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    
+    {
+      "name": "Run Groundwater Streamlit App",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": [
+        "run",
+        "my_project/app.py"
+      ],
+      "cwd": "${workspaceFolder}",
+      "python": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "STREAMLIT_BROWSER_GATHER_USAGE_STATS": "false"
+      }
+    }
+  ]
+}
