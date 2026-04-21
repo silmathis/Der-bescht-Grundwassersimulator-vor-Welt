@@ -1,3 +1,4 @@
-from .my_module import magic_number
+from .groundwater_model import GroundwaterModel
 
-__all__ = ["magic_number"]
+__version__ = "0.1.0"
+__all__ = ["GroundwaterModel"]
