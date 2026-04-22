@@ -6,22 +6,23 @@
       "type": "python",
       "request": "launch",
       "module": "streamlit",
-<<<<<<< HEAD
       "args": [
         "run",
         "my_project/app.py"
       ],
       "cwd": "${workspaceFolder}",
-      "python": "${command:python.interpreterPath}",
-=======
-      "args": ["run", "app.py"],
-      "cwd": "${workspaceFolder}/my_project",
->>>>>>> c8cc48775539e2f429287f0a1d8a59afabeb9c81
       "console": "integratedTerminal",
       "justMyCode": true,
       "env": {
         "STREAMLIT_BROWSER_GATHER_USAGE_STATS": "false"
       }
+    },
+    {
+      "name": "Python: app.py starten",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/my_project/app.py",
+      "console": "integratedTerminal"
     }
   ]
 }
