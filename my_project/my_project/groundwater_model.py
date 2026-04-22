@@ -77,6 +77,10 @@ class GroundwaterModel:
             Hydraulic conductivity for this zone (m/day)
         """
         self.hydraulic_conductivity[y_min:y_max, x_min:x_max] = conductivity
+
+    def set_background_conductivity(self, conductivity: float):
+        """Set hydraulic conductivity for the full domain."""
+        self.hydraulic_conductivity[:, :] = conductivity
     
     def set_recharge(self, x_min: int, x_max: int, y_min: int, y_max: int,
                      rate: float):

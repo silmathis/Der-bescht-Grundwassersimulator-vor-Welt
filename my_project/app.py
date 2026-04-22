@@ -34,6 +34,7 @@ It is **not** suitable for engineering predictions or real-world applications.
 if 'model' not in st.session_state:
     st.session_state.model = GroundwaterModel(nx=60, ny=40)
     st.session_state.solved = False
+    st.session_state.previous_model = None
 
 model = st.session_state.model
 
@@ -66,11 +67,11 @@ if nx != model.nx or ny != model.ny:
 st.sidebar.subheader("Boundary Conditions (Head in meters)")
 col1, col2 = st.sidebar.columns(2)
 with col1:
-    model.head_north = st.slider("North (top)", 0.0, 30.0, 15.0, step=0.5)
-    model.head_south = st.slider("South (bottom)", 0.0, 30.0, 5.0, step=0.5)
+    head_north = st.slider("North (top)", 0.0, 30.0, 15.0, step=0.5)
+    head_south = st.slider("South (bottom)", 0.0, 30.0, 5.0, step=0.5)
 with col2:
-    model.head_west = st.slider("West (left)", 0.0, 30.0, 10.0, step=0.5)
-    model.head_east = st.slider("East (right)", 0.0, 30.0, 10.0, step=0.5)
+    head_west = st.slider("West (left)", 0.0, 30.0, 10.0, step=0.5)
+    head_east = st.slider("East (right)", 0.0, 30.0, 10.0, step=0.5)
 
 st.sidebar.info(
     "**Tip:** Higher boundary values at the top will drive flow downward."
@@ -93,6 +94,15 @@ zone_conductivities = {
     "Medium (silt)": 1.0
 }
 selected_k = zone_conductivities[zone_type]
+
+background_k = st.sidebar.slider(
+    "Background conductivity K (m/day)",
+    min_value=0.1,
+    max_value=5.0,
+    value=1.0,
+    step=0.1,
+    help="Base conductivity outside the selected zone"
+)
 
 # Zone positioning
 col1, col2 = st.sidebar.columns(2)
@@ -137,15 +147,16 @@ tolerance = st.sidebar.selectbox(
 current_controls = (
     nx,
     ny,
-    model.head_north,
-    model.head_south,
-    model.head_west,
-    model.head_east,
+    head_north,
+    head_south,
+    head_west,
+    head_east,
     zone_type,
     zone_x_min,
     zone_x_max,
     zone_y_min,
     zone_y_max,
+    background_k,
     selected_k,
     recharge_rate,
     recharge_x_min,
@@ -167,23 +178,31 @@ if st.session_state.get("last_controls") != current_controls:
 col_main, col_info = st.columns([3, 1])
 
 with col_main:
-    if st.button("▶️ Solve Model", use_container_width=True, type="primary"):
+    if st.button("Solve Model", use_container_width=True, type="primary"):
         with st.spinner("Solving..."):
-            model = GroundwaterModel(nx=nx, ny=ny)
-            model.head_north = current_controls[2]
-            model.head_south = current_controls[3]
-            model.head_west = current_controls[4]
-            model.head_east = current_controls[5]
-            model.set_zone(zone_x_min, zone_x_max, zone_y_min, zone_y_max, selected_k)
-            model.set_recharge(recharge_x_min, recharge_x_max, recharge_y_min, recharge_y_max, recharge_rate)
-            model.solve(iterations=iterations, tolerance=tolerance)
-            st.session_state.model = model
+            st.session_state.previous_model = st.session_state.model
+            solved_model = GroundwaterModel(nx=nx, ny=ny)
+            solved_model.head_north = head_north
+            solved_model.head_south = head_south
+            solved_model.head_west = head_west
+            solved_model.head_east = head_east
+            solved_model.set_background_conductivity(background_k)
+            solved_model.set_zone(zone_x_min, zone_x_max, zone_y_min, zone_y_max, selected_k)
+            solved_model.set_recharge(recharge_x_min, recharge_x_max, recharge_y_min, recharge_y_max, recharge_rate)
+            solved_model.solve(iterations=iterations, tolerance=tolerance)
+            st.session_state.model = solved_model
+            model = solved_model
             st.session_state.solved = True
         st.success("Model solved!")
 
 if st.session_state.solved:
     # Compute flow field
     qx, qy, q_mag = model.compute_flow()
+    previous_model = st.session_state.get("previous_model")
+    has_previous = (
+        previous_model is not None
+        and previous_model.head.shape == model.head.shape
+    )
     
     with col_info:
         st.subheader("Results")
@@ -193,7 +212,13 @@ if st.session_state.solved:
         st.metric("Flow (max)", f"{summary['flow_max']:.3f} m/day")
     
     # Create visualizations
-    tabs = st.tabs(["Hydraulic Head", "Conductivity", "Flow Magnitude", "Flow Vectors"])
+    tabs = st.tabs([
+        "Hydraulic Head",
+        "Conductivity",
+        "Flow Magnitude",
+        "Flow Vectors",
+        "Change vs Previous Solve",
+    ])
     
     # Tab 1: Hydraulic Head
     with tabs[0]:
@@ -214,6 +239,12 @@ if st.session_state.solved:
     
     # Tab 2: Conductivity zones
     with tabs[1]:
+        col_k1, col_k2 = st.columns(2)
+        with col_k1:
+            st.metric("K min", f"{float(np.min(model.hydraulic_conductivity)):.2f} m/day")
+        with col_k2:
+            st.metric("K max", f"{float(np.max(model.hydraulic_conductivity)):.2f} m/day")
+
         fig_cond = go.Figure(data=go.Heatmap(
             z=np.log10(model.hydraulic_conductivity),
             colorscale='RdYlBu_r',
@@ -226,7 +257,10 @@ if st.session_state.solved:
             height=500
         )
         st.plotly_chart(fig_cond, use_container_width=True)
-        st.caption("Red = high permeability (sand), Blue = low permeability (clay)")
+        st.caption(
+            "Red = high permeability (sand), Blue = low permeability (clay). "
+            "This plot only changes when zone settings change."
+        )
     
     # Tab 3: Flow magnitude
     with tabs[2]:
@@ -280,6 +314,49 @@ if st.session_state.solved:
         )
         st.plotly_chart(fig_vec, use_container_width=True)
         st.caption("Red arrows show flow direction and speed. Blue background shows flow magnitude.")
+
+    # Tab 5: Change compared to previous solution
+    with tabs[4]:
+        if has_previous:
+            prev_qx, prev_qy, prev_q_mag = previous_model.compute_flow()
+            head_delta = model.head - previous_model.head
+            flow_delta = q_mag - prev_q_mag
+
+            col_delta_1, col_delta_2 = st.columns(2)
+            with col_delta_1:
+                st.metric("max |Δhead|", f"{np.max(np.abs(head_delta)):.3f} m")
+            with col_delta_2:
+                st.metric("max |Δflow|", f"{np.max(np.abs(flow_delta)):.3f} m/day")
+
+            fig_head_delta = go.Figure(data=go.Heatmap(
+                z=head_delta,
+                colorscale='RdBu',
+                zmid=0.0,
+                colorbar=dict(title="Δhead (m)")
+            ))
+            fig_head_delta.update_layout(
+                title="Head Change Since Previous Solve",
+                xaxis_title="X (cells)",
+                yaxis_title="Y (cells)",
+                height=450
+            )
+            st.plotly_chart(fig_head_delta, use_container_width=True)
+
+            fig_flow_delta = go.Figure(data=go.Heatmap(
+                z=flow_delta,
+                colorscale='RdBu',
+                zmid=0.0,
+                colorbar=dict(title="Δflow (m/day)")
+            ))
+            fig_flow_delta.update_layout(
+                title="Flow-Magnitude Change Since Previous Solve",
+                xaxis_title="X (cells)",
+                yaxis_title="Y (cells)",
+                height=450
+            )
+            st.plotly_chart(fig_flow_delta, use_container_width=True)
+        else:
+            st.info("Solve at least twice with different inputs to see change maps.")
 
 # ============================================================================
 # FOOTER: HELP AND EXPLANATION
