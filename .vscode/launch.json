@@ -1,18 +1,22 @@
 {
   "version": "0.2.0",
   "configurations": [
-    
     {
       "name": "Run Groundwater Streamlit App",
-      "type": "debugpy",
+      "type": "python",
       "request": "launch",
       "module": "streamlit",
+<<<<<<< HEAD
       "args": [
         "run",
         "my_project/app.py"
       ],
       "cwd": "${workspaceFolder}",
       "python": "${command:python.interpreterPath}",
+=======
+      "args": ["run", "app.py"],
+      "cwd": "${workspaceFolder}/my_project",
+>>>>>>> c8cc48775539e2f429287f0a1d8a59afabeb9c81
       "console": "integratedTerminal",
       "justMyCode": true,
       "env": {
