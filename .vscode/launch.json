@@ -12,7 +12,7 @@
         "my_project/app.py"
       ],
       "cwd": "${workspaceFolder}",
-      "python": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "python": "${command:python.interpreterPath}",
       "console": "integratedTerminal",
       "justMyCode": true,
       "env": {
