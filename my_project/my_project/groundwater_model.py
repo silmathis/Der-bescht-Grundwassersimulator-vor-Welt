@@ -7,7 +7,6 @@ for educational and exploratory purposes, not for engineering predictions.
 """
 
 import numpy as np
-from scipy.ndimage import convolve
 from typing import Tuple, Dict
 
 
@@ -49,6 +48,19 @@ class GroundwaterModel:
         self.head_south = 5.0   # m
         self.head_east = 10.0   # m
         self.head_west = 10.0   # m
+
+        self._initialize_head()
+
+    def _initialize_head(self):
+        """Initialize the head field from the current boundary conditions."""
+        boundary_mean = np.mean([
+            self.head_north,
+            self.head_south,
+            self.head_east,
+            self.head_west,
+        ])
+        self.head = np.ones((self.ny, self.nx)) * boundary_mean
+        self.head_initial = self.head.copy()
     
     def set_zone(self, x_min: int, x_max: int, y_min: int, y_max: int, 
                  conductivity: float):
@@ -65,6 +77,10 @@ class GroundwaterModel:
             Hydraulic conductivity for this zone (m/day)
         """
         self.hydraulic_conductivity[y_min:y_max, x_min:x_max] = conductivity
+
+    def set_background_conductivity(self, conductivity: float):
+        """Set hydraulic conductivity for the full domain."""
+        self.hydraulic_conductivity[:, :] = conductivity
     
     def set_recharge(self, x_min: int, x_max: int, y_min: int, y_max: int,
                      rate: float):
@@ -96,9 +112,14 @@ class GroundwaterModel:
         tolerance : float
             Convergence tolerance (change in max head)
         """
-        # Interior grid points (excluding boundaries)
-        interior_x = slice(1, self.nx - 1)
-        interior_y = slice(1, self.ny - 1)
+        # Start each solve from a clean field so previous runs do not leak in.
+        self._initialize_head()
+
+        # Apply boundary conditions before the first update.
+        self.head[0, :] = self.head_north
+        self.head[-1, :] = self.head_south
+        self.head[:, 0] = self.head_west
+        self.head[:, -1] = self.head_east
         
         for iteration in range(iterations):
             head_old = self.head.copy()
@@ -170,7 +191,7 @@ class GroundwaterModel:
     
     def reset_head(self):
         """Reset head field to initial condition."""
-        self.head = self.head_initial.copy()
+        self._initialize_head()
     
     def get_summary(self) -> Dict:
         """Get summary statistics of the current solution."""

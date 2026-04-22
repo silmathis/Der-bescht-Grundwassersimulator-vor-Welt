@@ -170,7 +170,4 @@ For questions or issues, please open an issue in the repository.
 
 ## Access
 
-So öffnest du jetzt sicher:
-
-Lokal immer: http://localhost:8501
-Öffentlich aktuell: https://1996945a175c4a.lhr.life
+Funktioniert & aktualisiert http://localhost:8501
