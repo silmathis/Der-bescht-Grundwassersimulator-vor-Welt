@@ -103,10 +103,7 @@ with col2:
     zone_x_max = st.number_input("X end", 1, nx, value=int(nx * 0.8))
     zone_y_max = st.number_input("Y end", 1, ny, value=int(ny * 0.7))
 
-if st.sidebar.button("Apply Zone"):
-    model.set_zone(zone_x_min, zone_x_max, zone_y_min, zone_y_max, selected_k)
-    st.session_state.solved = False
-    st.toast(f"Zone applied: K = {selected_k} m/day")
+st.sidebar.caption("The zone is applied when you solve the model.")
 
 # Recharge
 st.sidebar.subheader("Recharge (Infiltration)")
@@ -120,10 +117,7 @@ recharge_x_max = st.sidebar.number_input("R: X end", 1, nx, value=int(nx * 0.7),
 recharge_y_min = st.sidebar.number_input("R: Y start", 0, ny - 1, value=int(ny * 0.1), key="rechg_y_min")
 recharge_y_max = st.sidebar.number_input("R: Y end", 1, ny, value=int(ny * 0.3), key="rechg_y_max")
 
-if st.sidebar.button("Apply Recharge"):
-    model.set_recharge(recharge_x_min, recharge_x_max, recharge_y_min, recharge_y_max, recharge_rate)
-    st.session_state.solved = False
-    st.toast(f"Recharge zone applied: {recharge_rate} m/day")
+st.sidebar.caption("Recharge is applied when you solve the model.")
 
 # Reset button
 if st.sidebar.button("Reset Model", type="secondary"):
@@ -140,6 +134,32 @@ tolerance = st.sidebar.selectbox(
     format_func=lambda x: f"{x:.0e}"
 )
 
+current_controls = (
+    nx,
+    ny,
+    model.head_north,
+    model.head_south,
+    model.head_west,
+    model.head_east,
+    zone_type,
+    zone_x_min,
+    zone_x_max,
+    zone_y_min,
+    zone_y_max,
+    selected_k,
+    recharge_rate,
+    recharge_x_min,
+    recharge_x_max,
+    recharge_y_min,
+    recharge_y_max,
+    iterations,
+    tolerance,
+)
+
+if st.session_state.get("last_controls") != current_controls:
+    st.session_state.solved = False
+    st.session_state.last_controls = current_controls
+
 # ============================================================================
 # MAIN PANEL: SOLVE AND VISUALIZE
 # ============================================================================
@@ -149,7 +169,15 @@ col_main, col_info = st.columns([3, 1])
 with col_main:
     if st.button("▶️ Solve Model", use_container_width=True, type="primary"):
         with st.spinner("Solving..."):
+            model = GroundwaterModel(nx=nx, ny=ny)
+            model.head_north = current_controls[2]
+            model.head_south = current_controls[3]
+            model.head_west = current_controls[4]
+            model.head_east = current_controls[5]
+            model.set_zone(zone_x_min, zone_x_max, zone_y_min, zone_y_max, selected_k)
+            model.set_recharge(recharge_x_min, recharge_x_max, recharge_y_min, recharge_y_max, recharge_rate)
             model.solve(iterations=iterations, tolerance=tolerance)
+            st.session_state.model = model
             st.session_state.solved = True
         st.success("Model solved!")
 
