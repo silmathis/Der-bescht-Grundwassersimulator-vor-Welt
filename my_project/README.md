@@ -170,6 +170,4 @@ For questions or issues, please open an issue in the repository.
 
 ## Access
 
-So öffnest du jetzt sicher:
-
- http://localhost:8501
+Funktioniert & aktualisiert http://localhost:8501.
